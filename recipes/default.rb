@@ -16,34 +16,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
 include_recipe "git"
 
-%w<curl>.each do |pkg|
-  package pkg
+[ "curl"].each do |pkg|
+  package pkg do
+    action :install
+  end
 end
 
-case node[:platform]
-  when "centos","redhat","fedora"
-    package "openssl-devel"
-  when "debian","ubuntu"
-    package "libssl-dev"
+if node[:node][:install_from_source]
+  include_recipe "node::source"
+else
+  case node[:platform]
+    when "debian","ubuntu"
+      package "nodejs"
+    else
+      log("Installing Node from packages is only supported under Ubuntu and Debian.") { level :error }
+  end
 end
-
-git "/opt/node-src" do
-  repo node[:node][:repo_url]
-  revision node[:node][:revision]
-  notifies :run, "bash[compile_nodejs_source]", :immediately
-end
-
-bash "compile_nodejs_source" do
-  cwd "/opt/node-src/"
-  code <<-EOH
-    ./configure && make -j#{node[:cpu][:total]} && make install && git rev-parse HEAD > /usr/local/share/node-version
-  EOH
-  not_if '[ -f /usr/local/share/node-version ] && [ "$(git rev-parse HEAD)" = "$(cat /usr/local/share/node-version)" ]', :cwd => "/opt/node-src"
-end
-
 
 bash "install_npm" do
   user "root"
