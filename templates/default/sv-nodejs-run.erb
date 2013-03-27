@@ -3,4 +3,8 @@ exec 2>&1
 <% if @options.has_key? :dir %>
 cd <%= @options[:dir] %>
 <% end %>
+<% if node[:node][:install_from_source] == true %>
 exec chpst -u <%= @options[:user] %> -U <%= @options[:user] %> /usr/local/bin/node <%= @options[:script] %> <%= @options[:args] %>
+<% else %>
+exec chpst -u <%= @options[:user] %> -U <%= @options[:user] %> /usr/bin/node <%= @options[:script] %> <%= @options[:args] %>
+<% end %>
